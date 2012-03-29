@@ -1,6 +1,8 @@
 # Critique
 
-TODO: Write a gem description
+**WIP**
+
+critiques your code... simple memory profiling with easy setup (e.g., no need to patch ruby).
 
 ## Installation
 
@@ -18,7 +20,31 @@ Or install it yourself as:
 
 ## Usage
 
-TODO: Write usage instructions here
+given your code:
+
+    class ExampleClass
+      include Critique
+
+      def method
+        critique do
+          # code
+        end
+      end
+    end
+
+enable Critique:
+
+    Critique.enable! # e.g., in a Rails initializer
+    Critique.logger = $stdout
+    # or...
+    # Critique.logger = 'path/to/log'
+    # Critique.logger = Rails.logger
+
+run & view logs:
+
+    X  ExampleClass#method --> ... used: 6.60 GB free: 1.59 GB
+    X  ExampleClass#method <-- ... used: 6.62 GB free: 1.57 GB delta: +0.32%
+
 
 ## Contributing
 

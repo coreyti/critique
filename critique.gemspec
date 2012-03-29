@@ -4,8 +4,8 @@ require File.expand_path('../lib/critique/version', __FILE__)
 Gem::Specification.new do |gem|
   gem.authors       = ["Corey Innis"]
   gem.email         = ["corey@coolerator.net"]
-  gem.description   = %q{TODO: Write a gem description}
-  gem.summary       = %q{TODO: Write a gem summary}
+  gem.description   = %q{critiques your code}
+  gem.summary       = %q{critiques your code}
   gem.homepage      = ""
 
   gem.files         = `git ls-files`.split($\)
@@ -14,4 +14,11 @@ Gem::Specification.new do |gem|
   gem.name          = "critique"
   gem.require_paths = ["lib"]
   gem.version       = Critique::VERSION
+
+  gem.required_ruby_version = ">= 1.9"
+  gem.add_development_dependency "bundler"
+  gem.add_development_dependency "rake"
+  gem.add_development_dependency "rspec"
+  gem.add_development_dependency "rr"
+  gem.add_development_dependency "simplecov"
 end
