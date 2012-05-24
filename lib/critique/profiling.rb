@@ -28,29 +28,32 @@ module Critique
           before = stack.pop
           after  = system_usage
 
-          info(([label, '<--', filler(label)] + pretty(after, before)).join(' '))
+          info(([label, '<--', filler(label)] + pretty(after)).join(' '))
 
           padding(:-)
         end
 
         private
 
-          def pretty(pair, diff_with = nil)
-            used   = pair[0]
-            free   = pair[1]
+          def pretty(stats, diff_with = nil)
+            used   = stats[0]
+            free   = stats[1]
+            swap   = stats[2]
             result = [
               sprintf("used: %.2f GB", used / conversion_gb),
-              sprintf("free: %.2f GB", free / conversion_gb)
+              sprintf("free: %.2f GB", free / conversion_gb),
+              sprintf("swap: %.2f GB", swap / conversion_gb)
             ]
 
-            if diff_with
-              current  = used
-              previous = diff_with[0]
-              bytes    = (current - previous).to_f
-              percent  = (bytes / previous) * 100
-
-              result.push(sprintf("delta: %+.2f%", percent))
-            end
+            # WIP:
+            # if diff_with
+            #   current  = used
+            #   previous = diff_with[0]
+            #   bytes    = (current - previous).to_f
+            #   percent  = (bytes / previous) * 100
+            # 
+            #   result.push(sprintf("delta: %+.2f%", percent))
+            # end
 
             result
           end
@@ -70,16 +73,17 @@ module Critique
             # installed = `sysctl -n hw.memsize`.to_i / conversion_gb
 
             stats = `vm_stat`.split("\n")
-            used  = add_stats(stats, 'wired down', 'active', 'inactive')
-            free  = add_stats(stats, 'free', 'speculative')
+            used  = add_stats(stats, 'Pages wired down', 'Pages active', 'Pages inactive')
+            free  = add_stats(stats, 'Pages free', 'Pages speculative')
+            swap  = add_stats(stats, 'Pageouts')
 
-            [used, free]
+            [used, free, swap]
           end
 
           def add_stats(*args)
             stats   = args.shift
             keys    = args
-            matches = stats.select { |s| keys.any? { |k| s =~ /Pages #{k}:/ } }
+            matches = stats.select { |s| keys.any? { |k| s =~ /#{k}:/ } }
             values  = matches.map  { |m| m.split(/\s+/).last.to_i * conversion_paging }.inject(0, :+)
           end
 
