@@ -1,12 +1,16 @@
 module Critique
   module Profiling
-    def self.profile(base, caller_offset = 0)
-      method_name = caller[caller_offset] =~ /`([^']*)'/ && $1
+    def self.profile(*args)
+      base      = args.shift
+      offset    = args.shift
+      interests = args
+
+      method_name = caller[offset] =~ /`([^']*)'/ && $1
       method_text = label_for(base, method_name)
 
-      Profiler.enter(method_text)
+      Profiler.enter(method_text, interests)
       result = yield # (Profiler)
-      Profiler.leave(method_text)
+      Profiler.leave(method_text, interests)
 
       result
     end
@@ -17,25 +21,28 @@ module Critique
           Critique.logger.info(['X', padding, message].join)
         end
 
-        def enter(label)
+        def enter(label, interests)
           padding(:+)
-          before = stack.push(system_usage.push(label)).last
 
-          info(([label, '-->', filler(label)] + pretty(before)).join(' '))
+          before = stack.push(system_usage.push(label)).last
+          found  = (interests.map { |mod| [mod, ObjectSpace.each_object(mod).count].join(':') })
+
+          info(([label, '-->', filler(label)] + pretty(before, found)).join(' '))
         end
 
-        def leave(label)
+        def leave(label, interests)
+          found  = (interests.map { |mod| [mod, ObjectSpace.each_object(mod).count].join(':') })
           before = stack.pop
           after  = system_usage
 
-          info(([label, '<--', filler(label)] + pretty(after)).join(' '))
+          info(([label, '<--', filler(label)] + pretty(after, found)).join(' '))
 
           padding(:-)
         end
 
         private
 
-          def pretty(stats, diff_with = nil)
+          def pretty(stats, interests, diff_with = nil)
             used   = stats[0]
             free   = stats[1]
             swap   = stats[2]
@@ -44,6 +51,7 @@ module Critique
               sprintf("free: %.2f GB", free / conversion_gb),
               sprintf("swap: %.2f GB", swap / conversion_gb)
             ]
+            result << "interests: #{interests.join(', ')}" if interests.length > 0
 
             # WIP:
             # if diff_with

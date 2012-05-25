@@ -9,16 +9,25 @@ module Critique
       base.extend(ClassMethods)
     end
 
-    def profile(base)
+    def profile(*)
       yield
     end
 
     def disable!
-      module_eval("def self.profile(base) ; yield ; end")
+      module_eval <<-RUBY, __FILE__, __LINE__+1
+        def self.profile(*)
+          yield
+        end
+      RUBY
+      @_enabled = false
     end
 
     def enable!
-      module_eval("def self.profile(base, &block) ; Profiling.profile(base, 2, &block) ; end")
+      module_eval <<-RUBY, __FILE__, __LINE__+1
+        def self.profile(*args, &block)
+          Profiling.profile(*(args.insert(1,2)), &block)
+        end
+      RUBY
       @_enabled = true
     end
 
@@ -40,12 +49,12 @@ module Critique
   end
 
   module ClassMethods
-    def critique(&block)
-      Critique.profile(self, &block)
+    def critique(*args, &block)
+      Critique.profile(*([self] + args), &block)
     end
   end
 
-  def critique(&block)
-    Critique.profile(self, &block)
+  def critique(*args, &block)
+    Critique.profile(*([self] + args), &block)
   end
 end
